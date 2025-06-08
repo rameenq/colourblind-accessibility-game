@@ -10,6 +10,36 @@
 
   <div class="max-w-xl w-full p-6 bg-white rounded-2xl shadow-xl space-y-6">
     <h1 class="text-3xl font-extrabold text-center text-blue-700">🎯 Colour‑Blind Challenge</h1>
+    <details class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 shadow-sm open:ring-2 ring-blue-300">
+      <summary class="cursor-pointer font-semibold text-blue-700 text-lg mb-2">
+        ℹ️ Instructions & Accessibility Info
+      </summary>
+      <div class="mt-2 text-gray-700 space-y-4 text-sm leading-relaxed">
+        <p><strong>🎯 Goal:</strong> Click on all the <span class="text-blue-600 font-bold">blue circles</span> to win. Clicking a <span class="text-red-600 font-bold">red circle</span> ends the game.</p>
+    
+        <p><strong>🎨 Filters:</strong> You can simulate different types of color vision deficiency using the <em>“Choose Color Scheme”</em> dropdown and the <em>“Toggle Filter”</em> button.</p>
+    
+        <div class="space-y-2">
+          <p><strong>🟢 Deuteranopia (Green-Blind):</strong> People with deuteranopia have difficulty distinguishing between green and red hues. This is the most common form of color blindness.</p>
+    
+          <p><strong>🔴 Protanopia (Red-Blind):</strong> Individuals with protanopia lack red cones in their eyes and confuse reds with greens, often perceiving them as brown or gray.</p>
+    
+          <p><strong>⚪ Achromatopsia (Total Color Blindness):</strong> A rare condition where a person cannot perceive any color at all — everything appears in shades of gray.</p>
+    
+          <p class="text-gray-500 text-xs">
+            Source: <a href="https://www.color-blindness.com" class="underline text-blue-600 hover:text-blue-800" target="_blank" rel="noopener noreferrer">Color-Blindness.com</a>
+          </p>
+        </div>
+    
+        <ul class="list-disc list-inside mt-3">
+          <li>Click "Start Game" to begin</li>
+          <li>Select a filter and click "Toggle Filter" to apply it</li>
+          <li>Click blue circles to score, avoid red ones</li>
+          <li>Enter your name and submit your score after finishing</li>
+        </ul>
+      </div>
+    </details>
+    
 
     <canvas id="gameCanvas" width="400" height="300" class="border border-gray-300 mx-auto rounded-lg shadow-sm"></canvas>
 
@@ -18,7 +48,7 @@
         ▶ Start Game
       </button>
       <button id="filterBtn" class="flex items-center gap-2 px-5 py-2 bg-yellow-500 text-white rounded-lg shadow hover:bg-yellow-600 transition">
-        🎨 Change Filter
+        🎨 Toggle Filter
       </button>
     </div>
 
@@ -57,199 +87,176 @@
     const nameInput = document.getElementById("nameInput");
     const statusMsg = document.getElementById("statusMsg");
   
-    let filterMode = "default";
     let gameStarted = false;
     let gameOver = false;
+    let filterMode = "default";
+    let selectedFilter = "default";
+    let filterEnabled = false;
+  
     let shapes = [];
     let score = 0;
     let totalCircles = 0;
   
     function getColor(shape) {
-  if (filterMode === "protanopia") {
-    return shape.color === "blue" ? "#7B7B7B" : "#8B5E3C";
-  } else if (filterMode === "deuteranopia") {
-    return shape.color === "blue" ? "#777777" : "#666666";
-  } else if (filterMode === "achromatopsia") {
-    return "#999999";
-  } else {
-    return shape.color === "blue" ? "#3366FF" : "#FF3333";
-  }
-}
-
+      if (filterMode === "protanopia") {
+        return shape.color === "blue" ? "#7B7B7B" : "#8B5E3C";
+      } else if (filterMode === "deuteranopia") {
+        return shape.color === "blue" ? "#777777" : "#666666";
+      } else if (filterMode === "achromatopsia") {
+        return "#999999";
+      } else {
+        return shape.color === "blue" ? "#3366FF" : "#FF3333";
+      }
+    }
   
-  function generateShapes() {
-  shapes = [];
-  totalCircles = 0;
-
-  for (let i = 0; i < 5; i++) {
-    for (let j = 0; j < 6; j++) {
-      const x = 60 * j + 40;
-      const y = 60 * i + 40;
-
-      const isBlue = Math.random() < 0.5;
-
-      if (isBlue) totalCircles++;
-
-      shapes.push({
-        x,
-        y,
-        radius: 20,
-        type: "circle",
-        color: isBlue ? "blue" : "red",
-        collected: false,
+    function generateShapes() {
+      shapes = [];
+      totalCircles = 0;
+  
+      for (let i = 0; i < 5; i++) {
+        for (let j = 0; j < 6; j++) {
+          const x = 60 * j + 40;
+          const y = 60 * i + 40;
+          const isBlue = Math.random() < 0.5;
+          if (isBlue) totalCircles++;
+  
+          shapes.push({
+            x,
+            y,
+            radius: 20,
+            type: "circle",
+            color: isBlue ? "blue" : "red",
+            collected: false,
+          });
+        }
+      }
+    }
+  
+    function drawGame() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+      shapes.forEach(shape => {
+        ctx.globalAlpha = shape.collected ? 0.3 : 1;
+        ctx.fillStyle = getColor(shape);
+        ctx.beginPath();
+        ctx.arc(shape.x, shape.y, shape.radius, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.globalAlpha = 1;
       });
-    }
-  }
-}
-
   
-function drawGame() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  shapes.forEach(shape => {
-    ctx.globalAlpha = shape.collected ? 0.3 : 1;
-
-    ctx.fillStyle = getColor(shape);
-    if (shape.type === "circle") {
-      ctx.beginPath();
-      ctx.arc(shape.x, shape.y, shape.radius, 0, 2 * Math.PI);
-      ctx.fill();
-    } else {
-      ctx.fillRect(shape.x - shape.radius, shape.y - shape.radius, shape.radius * 2, shape.radius * 2);
+      ctx.fillStyle = "#000";
+      ctx.font = "16px sans-serif";
+      ctx.fillText("Score: " + score, 10, 20);
+  
+      if (gameOver && score < totalCircles * 10) {
+        ctx.fillStyle = "red";
+        ctx.font = "24px sans-serif";
+        ctx.fillText("Game Over!", 140, 160);
+      }
+  
+      if (score === totalCircles * 10) {
+        ctx.fillStyle = "green";
+        ctx.font = "24px sans-serif";
+        ctx.fillText("🎉 You Win!", 150, 160);
+      }
+  
+      statusMsg.textContent = `Filter: ${filterMode}`;
     }
-
-    ctx.globalAlpha = 1; 
-  });
-
-  ctx.globalAlpha = 1;
-
-  ctx.fillStyle = "#000";
-  ctx.font = "16px sans-serif";
-  ctx.fillText("Score: " + score, 10, 20);
-
-  if (gameOver && score < totalCircles * 10) {
-    ctx.fillStyle = "red";
-    ctx.font = "24px sans-serif";
-    ctx.fillText("Game Over!", 140, 160);
-  }
-
-  if (score === totalCircles * 10) {
-    ctx.fillStyle = "green";
-    ctx.font = "24px sans-serif";
-    ctx.fillText("🎉 You Win!", 150, 160);
-  }
-}
-
+  
     function isClickedShape(shape, mouseX, mouseY) {
       if (shape.collected) return false;
-  
-      if (shape.type === "circle") {
-        const dx = mouseX - shape.x;
-        const dy = mouseY - shape.y;
-        return Math.sqrt(dx * dx + dy * dy) <= shape.radius;
-      } else {
-        return (
-          mouseX >= shape.x - shape.radius &&
-          mouseX <= shape.x + shape.radius &&
-          mouseY >= shape.y - shape.radius &&
-          mouseY <= shape.y + shape.radius
-        );
-      }
+      const dx = mouseX - shape.x;
+      const dy = mouseY - shape.y;
+      return Math.sqrt(dx * dx + dy * dy) <= shape.radius;
     }
   
-    canvas.addEventListener("click", (e) => {
-  if (!gameStarted || gameOver) return;
-
-  const rect = canvas.getBoundingClientRect();
-  const mouseX = e.clientX - rect.left;
-  const mouseY = e.clientY - rect.top;
-
-  for (let shape of shapes) {
-    if (isClickedShape(shape, mouseX, mouseY)) {
-      if (shape.color === "blue") {
-        shape.collected = true;
-        score += 10;
-        drawGame();
-
-        if (score === totalCircles * 10) {
-          gameOver = true;
-          drawGame();
+    canvas.addEventListener("click", e => {
+      if (!gameStarted || gameOver) return;
+  
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+  
+      for (let shape of shapes) {
+        if (isClickedShape(shape, mouseX, mouseY)) {
+          if (shape.color === "blue") {
+            shape.collected = true;
+            score += 10;
+            drawGame();
+  
+            if (score === totalCircles * 10) {
+              gameOver = true;
+              drawGame();
+            }
+          } else {
+            gameOver = true;
+            drawGame();
+            break;
+          }
         }
-      } else {
-        gameOver = true;
-        drawGame();
-        break;
       }
-    }
-  }
-}); 
-
+    });
   
     startBtn.onclick = () => {
       gameStarted = true;
       gameOver = false;
       score = 0;
+      filterEnabled = false;
       filterMode = "default";
       generateShapes();
       drawGame();
     };
   
-const filterModes = ["default", "protanopia", "deuteranopia", "achromatopsia"];
-let filterIndex = 0;
-
-    filterBtn.onclick = () => {
-  if (!gameStarted || gameOver) {
-    alert("Start a new game to apply filters.");
-    return;
-  }
-  filterIndex = (filterIndex + 1) % filterModes.length;
-  filterMode = filterModes[filterIndex];
-  colorSelect.value = filterMode; 
-  console.log("Toggled to:", filterMode);
-  drawGame();
-};
-
-  
     colorSelect.onchange = () => {
-      if (gameStarted && !gameOver) {
-        filterMode = colorSelect.value;
-        drawGame();
-      }
+      selectedFilter = colorSelect.value;
+      console.log("Selected filter updated to:", selectedFilter);
     };
+  
+    filterBtn.onclick = () => {
+      if (!gameStarted || gameOver) {
+        alert("Start a new game to apply filters.");
+        return;
+      }
+  
+      filterEnabled = !filterEnabled;
+      filterMode = filterEnabled ? selectedFilter : "default";
+      console.log("Filter toggled to:", filterMode);
+      drawGame();
+    };
+  
     submitBtn.onclick = async () => {
-    if (!gameStarted || !gameOver) {
-      alert("You must finish a game first.");
-      return;
-    }
-
-    const name = nameInput.value || "Anonymous";
-    const mode = colorSelect.value;
-
-    const payload = {
-      name,
-      mode,
-      score,
-      timestamp: new Date().toISOString(),
-    };
-
-    try {
-      const res = await fetch("http://localhost:3000/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-      if (data.status === "success") {
-        statusMsg.textContent = "✔ Score submitted!";
-      } else {
-        statusMsg.textContent = "Failed to submit.";
+      if (!gameStarted || !gameOver) {
+        alert("You must finish a game first.");
+        return;
       }
-    } catch (err) {
-      console.error(err);
-      statusMsg.textContent = "Could not connect to server.";
-    }
-  };
+  
+      const name = nameInput.value || "Anonymous";
+  
+      const payload = {
+        name,
+        mode: filterMode,
+        score,
+        timestamp: new Date().toISOString(),
+      };
+  
+      try {
+        const res = await fetch("http://localhost:3000/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+  
+        const data = await res.json();
+        if (data.status === "success") {
+          statusMsg.textContent = "✔ Score submitted!";
+        } else {
+          statusMsg.textContent = "Failed to submit.";
+        }
+      } catch (err) {
+        console.error(err);
+        statusMsg.textContent = "Could not connect to server.";
+      }
+    };
   
     ctx.fillStyle = "#ccc";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -257,6 +264,7 @@ let filterIndex = 0;
     ctx.font = "18px sans-serif";
     ctx.fillText("Click 'Start Game' to begin", 80, 150);
   </script>
+  
   
   
   
